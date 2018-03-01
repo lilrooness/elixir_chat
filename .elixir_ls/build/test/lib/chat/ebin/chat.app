@@ -1,9 +1,0 @@
-{application,chat,
-             [{applications,[kernel,stdlib,elixir,logger,cowboy]},
-              {description,"chat"},
-              {modules,['Elixir.Chat','Elixir.Client','Elixir.Server',
-                        'Elixir.ServerSupervisor']},
-              {registered,[]},
-              {vsn,"0.1.0"},
-              {mod,{'Elixir.Chat',[]}},
-              {extra_applications,[logger,cowboy]}]}.
