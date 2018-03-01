@@ -26,7 +26,7 @@ defmodule ChatWebsocketHandler do
   def websocket_handle({:text, data}, state) do
     term = Eljiffy.decode_maps(data)
     command = term["command"]
-    state = case command do
+    newState = case command do
       "new-room" ->
       	{:ok, pid} = ChatSupervisor.newRoom(term["room"])
         Map.put(state, :room, %{name: term["room"], pid: pid})
@@ -35,13 +35,19 @@ defmodule ChatWebsocketHandler do
         Map.put(state, :room, %{name: term["room"], pid: pid})
       "msg" ->
         ChatRoom.bcast(state.room.pid, term["msg"], term["name"])
+	state
     end
-    {:ok, state}
+    {:ok, newState}
   end
 
   def websocket_info({:msg, msg}, state) do
     data = Eljiffy.encode(msg)
     {:reply, {:text, data}, state}
+  end
+
+  def terminate(_reason, _req, state) do
+    {:ok, _name} = ChatRoom.remove_client(state.room.pid, self())
+    :ok
   end
 end
 
@@ -81,6 +87,17 @@ defmodule ChatRoom do
         {:reply, {:error, :name_taken}, state}
     end
   end
+  
+  def handle_call({:remove_client, clientPid}, _from, state) do
+    case state.clients[clientPid] do
+      nil ->
+        {:reply, {:error, :bad_client_pid}, state}
+      name ->
+        {_, newClients} = Map.pop(state.clients, clientPid)
+	bcast_system_msg(self(), name <> " left")
+	{:reply, {:ok, name}, %{state | clients: newClients}}
+    end
+  end
 
   def child_spec([roomId]) do
     %{
@@ -92,8 +109,12 @@ defmodule ChatRoom do
     }
   end
 
-  def add_client(chatRoom, pid, name) do
-    GenServer.call(chatRoom, {:add_client, pid, name})
+  def add_client(chatRoom, clientPid, name) do
+    GenServer.call(chatRoom, {:add_client, clientPid, name})
+  end
+
+  def remove_client(chatRoom, clientPid) do
+    GenServer.call(chatRoom, {:remove_client, clientPid})
   end
 
   def bcast(chatRoom, from, msg) do
