@@ -31,7 +31,7 @@ defmodule ChatWebsocketHandler do
       	{:ok, pid} = ChatSupervisor.newRoom(term["room"])
         Map.put(state, :room, %{name: term["room"], pid: pid})
       "join" ->
-	{:ok, _name, pid} = ChatSupervisor.joinRoom(term["room"], self(), term["name"])
+        {:ok, _name, pid} = ChatSupervisor.joinRoom(term["room"], self(), term["name"])
         Map.put(state, :room, %{name: term["room"], pid: pid})
       "msg" ->
         ChatRoom.bcast(state.room.pid, term["msg"], term["name"])
@@ -59,17 +59,25 @@ defmodule ChatRoom do
     case state.clients[from] do
       nil ->
         :ok
-      _pid ->
-        for client <- Map.keys(state.clients), do: send(client, %{from: from, message: msg})
+      name ->
+        for client <- Map.keys(state.clients), do: send(client, %{from: name, message: msg})
     end
     {:noreply, state}
   end
 
+  def handle_cast({:bcast_system_msg, msg}, state) do
+    for client <- Map.keys(state.clients), do: send(client, %{from: "SERVER", message: msg})
+    {:noreply, state}
+  end
+
   def handle_call({:add_client, clientPid, name}, _from, state) do
-    case state.clients[clientPid] do
-      nil ->
+    case {name, state.clients[clientPid]} do
+      {"SERVER", _} ->
+        {:reply, {:error, :name_taken}, state}
+      {_, nil} ->
+        bcast_system_msg(self(), name <> " joined")
         {:reply, {:ok, name}, %{state | :clients => Map.put(state.clients, clientPid, name)}}
-      _ ->
+      {_, _} ->
         {:reply, {:error, :name_taken}, state}
     end
   end
@@ -91,6 +99,10 @@ defmodule ChatRoom do
   def bcast(chatRoom, from, msg) do
     GenServer.cast(chatRoom, {:bcast, msg, from})
     :ok
+  end
+
+  def bcast_system_msg(chatRoom, msg) do
+    GenServer.cast(chatRoom, {:bcast_system_msg, msg})
   end
 end
 
