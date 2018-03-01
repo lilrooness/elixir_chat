@@ -1,0 +1,8 @@
+%{
+  "cowboy": {:git, "https://github.com/ninenines/cowboy.git", "e23e12287ab0557444c676c8f6c3c27db3427659", [branch: "master"]},
+  "cowlib": {:git, "https://github.com/ninenines/cowlib", "3ef5b48a028bb66f82b452c98ae515903096641c", [ref: "2.1.0"]},
+  "distillery": {:hex, :distillery, "1.5.2", "eec18b2d37b55b0bcb670cf2bcf64228ed38ce8b046bb30a9b636a6f5a4c0080", [:mix], [], "hexpm"},
+  "eljiffy": {:hex, :eljiffy, "1.0.0", "16e744407ae10d2c9e18a6f2111d353d6704dcb4cf0dada9f9b39f56c056eab7", [:mix], [{:jiffy, "~> 0.15.0", [hex: :jiffy, repo: "hexpm", optional: false]}], "hexpm"},
+  "jiffy": {:hex, :jiffy, "0.15.0", "c44b61ea7b5d81b5bbd95ea5922d7c5f915d5bf15500fd1372c1aa10404673a9", [:rebar3], [], "hexpm"},
+  "ranch": {:git, "https://github.com/ninenines/ranch", "55c2a9d623454f372a15e99721a37093d8773b48", [ref: "1.4.0"]},
+}
